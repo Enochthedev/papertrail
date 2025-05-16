@@ -15,9 +15,12 @@ export function TypingAnimation({ text, className, speed = 100 }: TypingAnimatio
 
   useEffect(() => {
     let index = 0
+    const fullText = text || ""
+    setDisplayText("")
+
     const timer = setInterval(() => {
-      if (index < text.length) {
-        setDisplayText((prev) => prev + text.charAt(index))
+      if (index < fullText.length) {
+        setDisplayText((prev) => fullText.substring(0, index + 1))
         index++
       } else {
         clearInterval(timer)
@@ -30,7 +33,7 @@ export function TypingAnimation({ text, className, speed = 100 }: TypingAnimatio
 
   return (
     <div className={cn("relative", className)}>
-      <span>{displayText}</span>
+      <span aria-live="polite">{displayText}</span>
       {!isComplete && <span className="animate-cursor-blink ml-0.5 inline-block h-5 w-0.5 bg-current"></span>}
     </div>
   )

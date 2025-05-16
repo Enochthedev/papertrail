@@ -57,14 +57,14 @@ export function UploadPage() {
   }
 
   return (
-    <div className="container max-w-3xl py-12 paper-texture">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold font-serif mb-2">Upload Markdown</h1>
+    <div className="container max-w-3xl py-8 sm:py-12 px-4 sm:px-6 paper-texture">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold font-serif mb-2">Upload Markdown</h1>
         <p className="text-muted-foreground font-serif">Upload a markdown file to start reading</p>
       </div>
 
       <div
-        className={`border-2 border-dashed rounded-lg p-12 text-center ${
+        className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center ${
           isDragging ? "border-primary bg-primary/5" : "border-border"
         }`}
         onDragOver={handleDragOver}
@@ -74,13 +74,13 @@ export function UploadPage() {
         <div className="flex flex-col items-center justify-center">
           <div className="mb-4 rounded-full bg-primary/10 p-3">
             {isUploading ? (
-              <Upload className="h-10 w-10 text-primary animate-pulse" />
+              <Upload className="h-8 sm:h-10 w-8 sm:w-10 text-primary animate-pulse" />
             ) : (
-              <FileUp className="h-10 w-10 text-primary" />
+              <FileUp className="h-8 sm:h-10 w-8 sm:w-10 text-primary" />
             )}
           </div>
 
-          <h3 className="mb-2 text-xl font-medium font-serif">
+          <h3 className="mb-2 text-lg sm:text-xl font-medium font-serif">
             {isUploading ? "Uploading..." : "Drag & Drop your markdown file"}
           </h3>
 
@@ -103,7 +103,7 @@ export function UploadPage() {
         </div>
       </div>
 
-      <div className="mt-8 text-center text-sm text-muted-foreground">
+      <div className="mt-6 sm:mt-8 text-center text-sm text-muted-foreground">
         <p>Supported file format: Markdown (.md)</p>
       </div>
     </div>

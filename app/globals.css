@@ -104,15 +104,15 @@
   }
 
   .book-content h1 {
-    @apply text-3xl font-bold mb-6 mt-8;
+    @apply text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 mt-6 sm:mt-8;
   }
 
   .book-content h2 {
-    @apply text-2xl font-bold mb-4 mt-6;
+    @apply text-xl sm:text-2xl font-bold mb-3 sm:mb-4 mt-5 sm:mt-6;
   }
 
   .book-content h3 {
-    @apply text-xl font-bold mb-3 mt-5;
+    @apply text-lg sm:text-xl font-bold mb-2 sm:mb-3 mt-4 sm:mt-5;
   }
 
   .book-content p {
@@ -187,45 +187,9 @@
     background-color: #2a2a2a;
   }
 
-  /* Page flip animation */
-  .page-flip-container {
-    perspective: 1000px;
-  }
-
-  .page {
-    transform-style: preserve-3d;
-    transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-  }
-
-  .page.flipping {
-    transform: rotateY(-180deg);
-  }
-
-  .page-front,
-  .page-back {
-    backface-visibility: hidden;
-  }
-
-  .page-back {
-    transform: rotateY(180deg);
-  }
-
-  /* Page curl effect */
-  .page-curl {
-    position: relative;
-  }
-
-  .page-curl::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 30px;
-    height: 30px;
-    background: linear-gradient(135deg, transparent 50%, hsl(var(--page-edge)) 50%);
-    border-radius: 0 0 0 5px;
-    box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.1);
-    transition: background 0.3s ease;
+  /* Simple reader transitions */
+  .reader-container {
+    transition: opacity 0.2s ease-in-out;
   }
 
   /* Reader mode */
@@ -241,5 +205,55 @@
   /* Theme transition */
   .theme-transition {
     @apply transition-colors duration-300;
+  }
+
+  /* Improved touch targets for mobile */
+  @media (max-width: 640px) {
+    button,
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+    }
+
+    .book-content {
+      @apply text-base;
+    }
+  }
+
+  /* Improved focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Improved scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+
+  /* Safe area insets for modern mobile devices */
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

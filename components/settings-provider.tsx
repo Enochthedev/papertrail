@@ -28,27 +28,35 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const storedSettings = localStorage.getItem("papertrail-settings")
-    if (storedSettings) {
-      try {
-        const parsedSettings = JSON.parse(storedSettings)
-        setFontFamily(parsedSettings.fontFamily || defaultSettings.fontFamily)
-        setFontSize(parsedSettings.fontSize || defaultSettings.fontSize)
-        setLineHeight(parsedSettings.lineHeight || defaultSettings.lineHeight)
-      } catch (error) {
-        console.error("Failed to parse stored settings:", error)
+    try {
+      const storedSettings = localStorage.getItem("papertrail-settings")
+      if (storedSettings) {
+        try {
+          const parsedSettings = JSON.parse(storedSettings)
+          setFontFamily(parsedSettings.fontFamily || defaultSettings.fontFamily)
+          setFontSize(parsedSettings.fontSize || defaultSettings.fontSize)
+          setLineHeight(parsedSettings.lineHeight || defaultSettings.lineHeight)
+        } catch (error) {
+          console.error("Failed to parse stored settings:", error)
+        }
       }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error)
     }
   }, [])
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    const settings = {
-      fontFamily,
-      fontSize,
-      lineHeight,
+    try {
+      const settings = {
+        fontFamily,
+        fontSize,
+        lineHeight,
+      }
+      localStorage.setItem("papertrail-settings", JSON.stringify(settings))
+    } catch (error) {
+      console.error("Error saving to localStorage:", error)
     }
-    localStorage.setItem("papertrail-settings", JSON.stringify(settings))
   }, [fontFamily, fontSize, lineHeight])
 
   const resetSettings = () => {

@@ -27,10 +27,12 @@ export function BookmarksList({ fileId, onNavigate, onClose }: BookmarksListProp
   const [bookmarks, setBookmarks] = useState<BookmarkType[]>([])
   const [sortBy, setSortBy] = useState<"date" | "section">("date")
 
+  // Fix: Remove getBookmarks from the dependency array to prevent infinite loop
   useEffect(() => {
+    // Only fetch bookmarks when fileId changes
     const fetchedBookmarks = getBookmarks(fileId)
     setBookmarks(fetchedBookmarks)
-  }, [fileId, getBookmarks])
+  }, [fileId]) // Removed getBookmarks from dependencies
 
   const handleRemoveBookmark = (bookmarkId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -91,7 +93,7 @@ export function BookmarksList({ fileId, onNavigate, onClose }: BookmarksListProp
           {sortedBookmarks.map((bookmark) => (
             <div
               key={bookmark.id}
-              className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 cursor-pointer group"
+              className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer group"
               onClick={() => handleNavigate(bookmark.sectionIndex)}
             >
               <div className="flex items-start gap-2 flex-1 min-w-0">

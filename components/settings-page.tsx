@@ -40,9 +40,9 @@ function SettingsContent() {
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Font Family
             </label>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3">
               <button
-                className={`px-4 py-2 rounded-md border ${
+                className={`px-4 py-2 rounded-md border flex-1 ${
                   fontFamily === "serif"
                     ? "bg-primary text-primary-foreground"
                     : "bg-background hover:bg-accent hover:text-accent-foreground"
@@ -52,7 +52,7 @@ function SettingsContent() {
                 <span className="font-serif">Serif</span>
               </button>
               <button
-                className={`px-4 py-2 rounded-md border ${
+                className={`px-4 py-2 rounded-md border flex-1 ${
                   fontFamily === "sans"
                     ? "bg-primary text-primary-foreground"
                     : "bg-background hover:bg-accent hover:text-accent-foreground"
@@ -61,6 +61,12 @@ function SettingsContent() {
               >
                 <span className="font-sans">Sans-serif</span>
               </button>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2 text-sm text-muted-foreground gap-2">
+              <span>More fonts coming soon...</span>
+              <a href="/suggestions" className="text-primary hover:underline focus:outline-none">
+                Suggest a font
+              </a>
             </div>
           </div>
 

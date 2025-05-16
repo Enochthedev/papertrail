@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 // Add a new Bookmark type
 type Bookmark = {
@@ -42,42 +42,50 @@ export function MarkdownProvider({ children }: { children: React.ReactNode }) {
 
   // Load files from localStorage on mount
   useEffect(() => {
-    const storedFiles = localStorage.getItem("papertrail-files")
-    if (storedFiles) {
-      try {
-        const parsedFiles = JSON.parse(storedFiles)
-        // Convert string dates back to Date objects
-        const filesWithDates = parsedFiles.map((file: any) => ({
-          ...file,
-          lastOpened: new Date(file.lastOpened),
-          bookmarks: Array.isArray(file.bookmarks)
-            ? file.bookmarks.map((bookmark: any) => ({
-                ...bookmark,
-                createdAt: new Date(bookmark.createdAt),
-              }))
-            : [],
-        }))
-        setFiles(filesWithDates)
+    try {
+      const storedFiles = localStorage.getItem("papertrail-files")
+      if (storedFiles) {
+        try {
+          const parsedFiles = JSON.parse(storedFiles)
+          // Convert string dates back to Date objects
+          const filesWithDates = parsedFiles.map((file: any) => ({
+            ...file,
+            lastOpened: new Date(file.lastOpened),
+            bookmarks: Array.isArray(file.bookmarks)
+              ? file.bookmarks.map((bookmark: any) => ({
+                  ...bookmark,
+                  createdAt: new Date(bookmark.createdAt),
+                }))
+              : [],
+          }))
+          setFiles(filesWithDates)
 
-        // Set recent files
-        const sorted = [...filesWithDates].sort(
-          (a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime(),
-        )
-        setRecentFiles(sorted.slice(0, 5))
-      } catch (error) {
-        console.error("Failed to parse stored files:", error)
+          // Set recent files
+          const sorted = [...filesWithDates].sort(
+            (a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime(),
+          )
+          setRecentFiles(sorted.slice(0, 5))
+        } catch (error) {
+          console.error("Failed to parse stored files:", error)
+        }
       }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error)
     }
   }, [])
 
   // Save files to localStorage whenever they change
   useEffect(() => {
-    if (files.length > 0) {
-      localStorage.setItem("papertrail-files", JSON.stringify(files))
+    try {
+      if (files.length > 0) {
+        localStorage.setItem("papertrail-files", JSON.stringify(files))
 
-      // Update recent files
-      const sorted = [...files].sort((a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime())
-      setRecentFiles(sorted.slice(0, 5))
+        // Update recent files
+        const sorted = [...files].sort((a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime())
+        setRecentFiles(sorted.slice(0, 5))
+      }
+    } catch (error) {
+      console.error("Error saving to localStorage:", error)
     }
   }, [files])
 
@@ -113,106 +121,132 @@ export function MarkdownProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const getFile = (id: string): MarkdownFile | null => {
-    const file = files.find((f) => f.id === id)
-    if (file) {
-      // Update last opened time
-      const updatedFile = { ...file, lastOpened: new Date() }
-      setFiles((prev) => prev.map((f) => (f.id === id ? updatedFile : f)))
-      return updatedFile
-    }
-    return null
-  }
+  // Fix: Memoize getFile and modify to prevent infinite updates
+  const getFile = useCallback(
+    (id: string): MarkdownFile | null => {
+      const file = files.find((f) => f.id === id)
+      if (file) {
+        // Only update lastOpened if it's been more than a minute since last update
+        // This prevents constant state updates when the component re-renders
+        const now = new Date()
+        const lastOpenedTime = new Date(file.lastOpened).getTime()
+        const timeDiff = now.getTime() - lastOpenedTime
 
-  const handleSetCurrentFile = (id: string) => {
-    const file = getFile(id)
-    if (file) {
-      setCurrentFile(file)
-    }
-  }
+        // If it's been more than a minute, update the lastOpened time
+        if (timeDiff > 60000) {
+          const updatedFile = { ...file, lastOpened: now }
+          setFiles((prev) => prev.map((f) => (f.id === id ? updatedFile : f)))
+          return updatedFile
+        }
+
+        return file
+      }
+      return null
+    },
+    [files],
+  )
+
+  const handleSetCurrentFile = useCallback(
+    (id: string) => {
+      const file = getFile(id)
+      if (file) {
+        setCurrentFile(file)
+      }
+    },
+    [getFile],
+  )
 
   const generateId = (): string => {
     return Math.random().toString(36).substring(2, 15)
   }
 
   // Add a new bookmark
-  const addBookmark = (fileId: string, sectionIndex: number, title: string) => {
-    const newBookmark: Bookmark = {
-      id: generateId(),
-      sectionIndex,
-      title,
-      createdAt: new Date(),
-    }
+  const addBookmark = useCallback(
+    (fileId: string, sectionIndex: number, title: string) => {
+      const newBookmark: Bookmark = {
+        id: generateId(),
+        sectionIndex,
+        title,
+        createdAt: new Date(),
+      }
 
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id === fileId) {
-          // Check if a bookmark for this section already exists
-          const existingBookmarkIndex = file.bookmarks.findIndex((b) => b.sectionIndex === sectionIndex)
+      setFiles((prev) =>
+        prev.map((file) => {
+          if (file.id === fileId) {
+            // Check if a bookmark for this section already exists
+            const existingBookmarkIndex = file.bookmarks.findIndex((b) => b.sectionIndex === sectionIndex)
+
+            if (existingBookmarkIndex >= 0) {
+              // Replace the existing bookmark
+              const updatedBookmarks = [...file.bookmarks]
+              updatedBookmarks[existingBookmarkIndex] = newBookmark
+              return { ...file, bookmarks: updatedBookmarks }
+            } else {
+              // Add a new bookmark
+              return { ...file, bookmarks: [...file.bookmarks, newBookmark] }
+            }
+          }
+          return file
+        }),
+      )
+
+      // Update current file if it's the one being bookmarked
+      if (currentFile && currentFile.id === fileId) {
+        setCurrentFile((prev) => {
+          if (!prev) return prev
+
+          const existingBookmarkIndex = prev.bookmarks.findIndex((b) => b.sectionIndex === sectionIndex)
 
           if (existingBookmarkIndex >= 0) {
-            // Replace the existing bookmark
-            const updatedBookmarks = [...file.bookmarks]
+            const updatedBookmarks = [...prev.bookmarks]
             updatedBookmarks[existingBookmarkIndex] = newBookmark
-            return { ...file, bookmarks: updatedBookmarks }
+            return { ...prev, bookmarks: updatedBookmarks }
           } else {
-            // Add a new bookmark
-            return { ...file, bookmarks: [...file.bookmarks, newBookmark] }
+            return { ...prev, bookmarks: [...prev.bookmarks, newBookmark] }
           }
-        }
-        return file
-      }),
-    )
-
-    // Update current file if it's the one being bookmarked
-    if (currentFile && currentFile.id === fileId) {
-      setCurrentFile((prev) => {
-        if (!prev) return prev
-
-        const existingBookmarkIndex = prev.bookmarks.findIndex((b) => b.sectionIndex === sectionIndex)
-
-        if (existingBookmarkIndex >= 0) {
-          const updatedBookmarks = [...prev.bookmarks]
-          updatedBookmarks[existingBookmarkIndex] = newBookmark
-          return { ...prev, bookmarks: updatedBookmarks }
-        } else {
-          return { ...prev, bookmarks: [...prev.bookmarks, newBookmark] }
-        }
-      })
-    }
-  }
+        })
+      }
+    },
+    [currentFile],
+  )
 
   // Remove a bookmark
-  const removeBookmark = (fileId: string, bookmarkId: string) => {
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id === fileId) {
-          return {
-            ...file,
-            bookmarks: file.bookmarks.filter((b) => b.id !== bookmarkId),
+  const removeBookmark = useCallback(
+    (fileId: string, bookmarkId: string) => {
+      setFiles((prev) =>
+        prev.map((file) => {
+          if (file.id === fileId) {
+            return {
+              ...file,
+              bookmarks: file.bookmarks.filter((b) => b.id !== bookmarkId),
+            }
           }
-        }
-        return file
-      }),
-    )
+          return file
+        }),
+      )
 
-    // Update current file if it's the one being modified
-    if (currentFile && currentFile.id === fileId) {
-      setCurrentFile((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          bookmarks: prev.bookmarks.filter((b) => b.id !== bookmarkId),
-        }
-      })
-    }
-  }
+      // Update current file if it's the one being modified
+      if (currentFile && currentFile.id === fileId) {
+        setCurrentFile((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            bookmarks: prev.bookmarks.filter((b) => b.id !== bookmarkId),
+          }
+        })
+      }
+    },
+    [currentFile],
+  )
 
   // Get all bookmarks for a file
-  const getBookmarks = (fileId: string): Bookmark[] => {
-    const file = files.find((f) => f.id === fileId)
-    return file?.bookmarks || []
-  }
+  const getBookmarks = useCallback(
+    (fileId: string): Bookmark[] => {
+      const file = files.find((f) => f.id === fileId)
+      return file?.bookmarks || []
+    },
+    [files],
+  )
 
   return (
     <MarkdownContext.Provider

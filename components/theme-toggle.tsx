@@ -12,7 +12,10 @@ export function ThemeToggle() {
 
   // Avoid hydration mismatch by only rendering after mount
   useEffect(() => {
-    setMounted(true)
+    // Only run in browser environment
+    if (typeof window !== "undefined") {
+      setMounted(true)
+    }
   }, [])
 
   if (!mounted) {

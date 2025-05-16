@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Bookmark, BookmarkX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
@@ -15,10 +15,14 @@ interface BookmarkButtonProps {
 export function BookmarkButton({ fileId, sectionIndex, sectionTitle }: BookmarkButtonProps) {
   const { addBookmark, removeBookmark, getBookmarks } = useMarkdown()
   const { toast } = useToast()
-  const [isBookmarked, setIsBookmarked] = useState(() => {
+  const [isBookmarked, setIsBookmarked] = useState(false)
+
+  // Check if the section is bookmarked when the component mounts or when dependencies change
+  useEffect(() => {
     const bookmarks = getBookmarks(fileId)
-    return bookmarks.some((b) => b.sectionIndex === sectionIndex)
-  })
+    const bookmarked = bookmarks.some((b) => b.sectionIndex === sectionIndex)
+    setIsBookmarked(bookmarked)
+  }, [fileId, sectionIndex, getBookmarks])
 
   const toggleBookmark = () => {
     if (isBookmarked) {
